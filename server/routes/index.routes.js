@@ -1,35 +1,27 @@
 import { Router } from "express";
+import {
+  createTask,
+  deleteTask,
+  getTasks,
+  readTask,
+  updateTask,
+} from "../controllers/controllers.js";
 
 const router = Router();
 
 // INDEX
-router.get('/', (req, res) => {
-    console.log(req.params);
-    res.json({"name": "david"});
-})
+router.get("/", getTasks);
 
 // CREATE
-router.post('/create', (req, res) => {
-    console.log(req.params);
-    res.json({"name": "david"});
-})
+router.post("/create", createTask);
 
 // READ
-router.get('/:id', (req, res) => {
-    console.log(req.params);
-    res.json({"name": "david"});
-})
+router.get("/:id", readTask);
 
 // UPDATE
-router.put('/:id', (req, res) => {
-    console.log(req.params);
-    res.json({"name": "david"});
-})
+router.put("/:id", updateTask);
 
 // DELETE
-router.delete('/:id', (req, res) => {
-    console.log(req.params);
-    res.json({"name": "david"});
-})
+router.delete("/:id", deleteTask);
 
 export default router;

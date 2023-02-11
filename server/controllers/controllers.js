@@ -1,19 +1,19 @@
-const getTasks = (req, res) => {
-    res.send("Getting task");
+export const getTasks = (req, res) => {
+    res.send("Getting tasks");
 }
 
-const createTask = (req, res) => {
+export const createTask = (req, res) => {
     res.send("Creating task");
 }
 
-const readTask = (req, res) => {
+export const readTask = (req, res) => {
     res.send("Showing task");
 }
 
-const updateTask = (req, res) => {
+export const updateTask = (req, res) => {
     res.send("Updating task");
 }
 
-const deleteTask = (req, res) => {
+export const deleteTask = (req, res) => {
     res.send("Deleting task");
 }
