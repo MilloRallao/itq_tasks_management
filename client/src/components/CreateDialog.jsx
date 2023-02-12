@@ -29,6 +29,7 @@ export default function CreateDialog({
     date: moment(new Date()).format("MMM, DD YYYY HH:mm").toString(),
   });
 
+  // Validate name field (Max 40 characters and not empty)
   const checkName = () => {
     if (
       "name" in newTask &&
@@ -76,6 +77,7 @@ export default function CreateDialog({
     }
   };
 
+  // Validate description field (Max 250 characters and not empty)
   const checkDescription = () => {
     if (
       "description" in newTask &&
@@ -123,23 +125,20 @@ export default function CreateDialog({
     }
   };
 
+  // Handle all validations
   const validations = () => {
     checkName();
     checkDescription();
-  }
+  };
 
+  // Request to create a task
   const handleCreateTask = () => {
     validations();
     if (!taskErrors.name && !taskErrors.description) {
       axios
-        .post("/create", newTask)
+        .post("http://localhost:4000/create", newTask)
         .then((response) => {
-          setTasks((prevState) => {
-            return {
-              ...prevState,
-              newTask,
-            };
-          });
+          setTasks(response.data);
           enqueueSnackbar("Task created successfully", { variant: "success" });
           handleCloseDialog();
         })

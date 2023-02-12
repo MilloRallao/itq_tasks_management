@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import axios from "axios";
 import moment from "moment";
 import { useSnackbar } from "notistack";
@@ -21,12 +21,11 @@ export default function UpdateDialog({
   setTaskErrors,
   taskHelperTexts,
   setTaskHelperTexts,
-  tasks,
   setTasks,
 }) {
   const { enqueueSnackbar } = useSnackbar();
-  const [taskUpdated, setTaskUpdated] = useState(taskSelected);
 
+  // Validate name field (Max 40 characters and not empty)
   const checkName = () => {
     if (
       "name" in taskSelected &&
@@ -74,6 +73,7 @@ export default function UpdateDialog({
     }
   };
 
+  // Validate description field (Max 250 characters and not empty)
   const checkDescription = () => {
     if (
       "description" in taskSelected &&
@@ -121,23 +121,21 @@ export default function UpdateDialog({
     }
   };
 
+  // Handle all validations
   const validations = () => {
     checkName();
     checkDescription();
   };
 
+  // Request to update a task
   const handleUpdateTask = () => {
     validations();
     if (!taskErrors.name && !taskErrors.description) {
       axios
-        .put(`http:://localhost:4000/${taskUpdated.id}`, taskUpdated)
+        .put(`http://localhost:4000/${taskSelected.id}`, taskSelected)
         .then((response) => {
-          setTasks((prevState) => {
-            let tasks = [...prevState];
-            let taskUpdatedIndex = tasks.findIndex((task) => task.id === taskUpdated.id);
-            tasks[taskUpdatedIndex].completed = !tasks[taskUpdatedIndex].completed;
-            return tasks;
-          });
+          setTasks(response.data.originalTasks);
+          setTaskSelected(taskSelected);
           enqueueSnackbar("Task updated successfully", { variant: "success" });
           handleCloseDialog();
         })
@@ -163,12 +161,12 @@ export default function UpdateDialog({
           fullWidth
           helperText={taskHelperTexts.name}
           variant="outlined"
-          value={taskUpdated.name}
+          value={taskSelected.name}
           onChange={(e) => {
-            setTaskUpdated({
-              ...taskUpdated,
-              name: e.target.value,
-            });
+            setTaskSelected({
+              ...taskSelected,
+            name: e.target.value,
+            })
           }}
         />
         {/* DESCRIPTION */}
@@ -177,13 +175,13 @@ export default function UpdateDialog({
           label="Description"
           error={taskErrors.description}
           multiline
-          value={taskUpdated.description}
+          value={taskSelected.description}
           fullWidth
           helperText={taskHelperTexts.description}
           placeholder="Some description"
           onChange={(e) => {
-            setTaskUpdated({
-              ...taskUpdated,
+            setTaskSelected({
+              ...taskSelected,
               description: e.target.value,
             });
           }}
@@ -191,11 +189,11 @@ export default function UpdateDialog({
         {/* DATEPICKER */}
         <DesktopDatePicker
           label="Date"
-          value={taskUpdated.date}
+          value={taskSelected.date}
           disablePast
           onChange={(newValue) => {
-            setTaskUpdated({
-              ...taskUpdated,
+            setTaskSelected({
+              ...taskSelected,
               date: moment(newValue).format("MMM, DD YYYY HH:mm").toString(),
             });
           }}

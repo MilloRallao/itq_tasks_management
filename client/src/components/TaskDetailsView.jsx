@@ -21,7 +21,7 @@ export default function TaskDetailsView({
         <Typography variant="h5" component="div">
           {taskSelected.name}
         </Typography>
-        <Typography sx={{ mb: 1.5, fontSize: 14 }} color="text.secondary">
+        <Typography sx={{ mb: 1.5, fontSize: 14 }} color={taskSelected.completed ? "primary" : "error"}>
           {taskSelected.completed ? "Completed" : "Uncompleted"}
         </Typography>
         <Typography variant="body2">{taskSelected.description}</Typography>

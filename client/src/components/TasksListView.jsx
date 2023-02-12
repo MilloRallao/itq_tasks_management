@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import axios from "axios";
+import moment from "moment";
+import { useSnackbar } from "notistack";
 import Grid from "@mui/material/Unstable_Grid2/Grid2";
 import {
   Button,
@@ -15,7 +18,6 @@ import PostAdd from "@mui/icons-material/PostAdd";
 import SortByAlpha from "@mui/icons-material/SortByAlpha";
 import DateRange from "@mui/icons-material/DateRange";
 import Rule from "@mui/icons-material/Rule";
-import moment from "moment";
 
 export default function TasksListView({
   tasks,
@@ -23,21 +25,34 @@ export default function TasksListView({
   setTaskSelected,
   handleClickCreateTask,
   setOpenDialogDelete,
+  setTaskDeletedID,
 }) {
+  const { enqueueSnackbar } = useSnackbar();
   const [sortingType, setSortingType] = useState("");
 
+  // Request to get a task
   const handleSelectTask = (e) => {
     const { value } = e.target;
-    const taskSelected = tasks.filter((task) => task.id == value);
-    setTaskSelected(taskSelected[0]);
+    axios
+      .get(`http://localhost:4000/${value}`)
+      .then((response) => {
+        setTaskSelected(response.data[0]);
+      })
+      .catch((error) => {
+        console.log("ERROR GETTING A TASK:", error);
+      });
   };
 
-  const handleClickDeleteTask = () => {
+  // Open dialog to confirm deleting a task
+  const handleClickDeleteTask = (taskID) => {
+    setTaskDeletedID(taskID);
     setOpenDialogDelete(true);
   };
 
+  // Handle sorting by different ways
   const handleSortingType = (e, newSortingType) => {
     setSortingType(newSortingType);
+    // Sorting by name
     if (newSortingType === "name") {
       tasks.sort(function (a, b) {
         let nameA = a.name.toUpperCase(); // ignore upper and lowercase
@@ -54,10 +69,12 @@ export default function TasksListView({
         return 0;
       });
     } else if (newSortingType === "date") {
+      // Sorting by date
       tasks.sort(function (a, b) {
         return moment(a.date) - moment(b.date);
       });
     } else if (newSortingType === "completed") {
+      // Sorting by completed
       tasks.sort(function (a, b) {
         if (a.completed === b.completed) {
           return 0;
@@ -67,13 +84,24 @@ export default function TasksListView({
     }
   };
 
-  const handleChangeCompleted = (taskID) => {
-    setTasks((prevState) => {
-      let tasks = [...prevState];
-      let taskIndex = tasks.findIndex((task) => task.id === taskID);
-      tasks[taskIndex].completed = !tasks[taskIndex].completed;
-      return tasks;
-    });
+  // Request to update the completed field of a task
+  const handleChangeCompleted = (task) => {
+    axios
+      .put(`http://localhost:4000/${task.id}`, {updatingField: "completed"})
+      .then((response) => {
+        console.log(response);
+        setTasks(response.data.originalTasks);
+        setTaskSelected(response.data.taskUpdated);
+        if(response.data.taskUpdated.completed){
+          enqueueSnackbar("Task complete", { variant: "info" });
+        }else{
+          enqueueSnackbar("Task uncomplete", { variant: "warning" });
+        }
+      })
+      .catch((error) => {
+        console.log("ERROR ON COMPLETE TASK: ", error);
+        enqueueSnackbar("Error while completing task", { variant: "error" });
+      });
   };
 
   return (
@@ -122,7 +150,7 @@ export default function TasksListView({
               >
                 <Checkbox
                   checked={task.completed}
-                  onChange={() => handleChangeCompleted(task.id)}
+                  onChange={() => handleChangeCompleted(task)}
                 />
               </Tooltip>
               <ToggleButton
@@ -134,7 +162,10 @@ export default function TasksListView({
                 {task.name}
               </ToggleButton>
               <Tooltip title="Delete Task">
-                <IconButton color="error" onClick={handleClickDeleteTask}>
+                <IconButton
+                  color="error"
+                  onClick={() => handleClickDeleteTask(task.id)}
+                >
                   <Delete />
                 </IconButton>
               </Tooltip>

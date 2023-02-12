@@ -1,4 +1,5 @@
 import React from "react";
+import axios from "axios";
 import { useSnackbar } from "notistack";
 import {
   Button,
@@ -9,11 +10,21 @@ import {
   DialogTitle,
 } from "@mui/material";
 
-export default function DeleteDialog({ openDialogDelete, handleCloseDialog }) {
+export default function DeleteDialog({ setTasks, taskDeletedID, openDialogDelete, handleCloseDialog }) {
   const { enqueueSnackbar } = useSnackbar();
 
+  // Request to delete a task
   const handleDeleteTask = () => {
-    enqueueSnackbar("Task deleted successfully", { variant: "success" });
+    axios
+      .delete(`http://localhost:4000/${taskDeletedID}`)
+      .then((response) => {
+        setTasks(response.data);
+        enqueueSnackbar("Task deleted successfully", { variant: "success" });
+      })
+      .catch((error) => {
+        console.log("ERROR DELETING TASK:", error);
+        enqueueSnackbar("Error while deleting task", { variant: "error" });
+      });
     handleCloseDialog();
   };
 

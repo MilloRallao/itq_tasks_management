@@ -1,20 +1,22 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { SnackbarProvider } from "notistack";
-import { Divider, Typography } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
+import Grid from "@mui/material/Unstable_Grid2";
+import { Divider, Typography } from "@mui/material";
 import TasksListView from "./components/TasksListView";
 import DeleteDialog from "./components/DeleteDialog";
 import CreateDialog from "./components/CreateDialog";
 import UpdateDialog from "./components/UpdateDialog";
 import TaskDetailsView from "./components/TaskDetailsView";
 import TopBar from "./components/TopBar";
-import axios from "axios";
 
 export default function App() {
   const [tasks, setTasks] = useState([]);
   const [taskSelected, setTaskSelected] = useState({});
+
+  const [taskDeletedID, setTaskDeletedID] = useState();
 
   const [openDialogDelete, setOpenDialogDelete] = useState(false);
   const [openDialogCreate, setOpenDialogCreate] = useState(false);
@@ -29,26 +31,29 @@ export default function App() {
     description: "",
   });
 
+  // Request to get all tasks
   useEffect(() => {
     axios
       .get("http://localhost:4000/")
       .then((response) => {
-        console.log(response);
-        setTasks(response);
+        setTasks(response.data);
       })
       .catch((error) => {
         console.log("ERROR ON GET TASKS:", error);
       });
   }, []);
 
+  // Open dialog form to create a task
   const handleClickCreateTask = () => {
     setOpenDialogCreate(true);
   };
 
+  // Open dialog form to update a task
   const handleClickUpdateTask = () => {
     setOpenDialogUpdate(true);
   };
 
+  // Handle closing dialogs and resets errors
   const handleCloseDialog = () => {
     setOpenDialogDelete(false);
     setOpenDialogCreate(false);
@@ -84,6 +89,7 @@ export default function App() {
             setTaskSelected={setTaskSelected}
             handleClickCreateTask={handleClickCreateTask}
             setOpenDialogDelete={setOpenDialogDelete}
+            setTaskDeletedID={setTaskDeletedID}
           />
           <Divider orientation="vertical" variant="middle" flexItem />
           {Object.keys(taskSelected).length ? (
@@ -99,6 +105,8 @@ export default function App() {
         </Grid>
 
         <DeleteDialog
+          setTasks={setTasks}
+          taskDeletedID={taskDeletedID}
           openDialogDelete={openDialogDelete}
           handleCloseDialog={handleCloseDialog}
         />
@@ -120,7 +128,6 @@ export default function App() {
           setTaskHelperTexts={setTaskHelperTexts}
           taskSelected={taskSelected}
           setTaskSelected={setTaskSelected}
-          tasks={tasks}
           setTasks={setTasks}
         />
       </LocalizationProvider>
