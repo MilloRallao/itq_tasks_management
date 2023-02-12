@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./App.css";
-import { Divider } from "@mui/material";
+import { Divider, Typography } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import { SnackbarProvider } from "notistack";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -11,7 +11,7 @@ import CreateOrUpdateDialog from "./components/CreateOrUpdateDialog";
 import TaskDetailsView from "./components/TaskDetailsView";
 import TopBar from "./components/TopBar";
 
-const tasks = [
+const originalTasks = [
   {
     id: 1,
     name: "Recoger la mierda del perro",
@@ -36,22 +36,19 @@ const tasks = [
 ];
 
 export default function App() {
+  const [tasks, setTasks] = useState(originalTasks);
   const [updateOrCreate, setUpdateOrCreate] = useState("");
-  const [taskSelected, setTaskSelected] = useState({
-    id: null,
-    name: "",
-    description: "",
-    completed: false,
-    date: null,
-  });
+  const [taskSelected, setTaskSelected] = useState({});
   const [openDialogDelete, setOpenDialogDelete] = useState(false);
-  const [openDialogCreateOrUpdate, setOpenDialogCreateOrUpdate] = useState(false);
+  const [openDialogCreateOrUpdate, setOpenDialogCreateOrUpdate] =
+    useState(false);
   const [taskNameHelperText, setTaskNameHelperText] = useState("");
   const [taskNameError, setTaskNameError] = useState(false);
 
   const handleClickCreateOrUpdateTask = (e) => {
     const { name } = e.target;
-    setUpdateOrCreate(name || "Update");
+    setUpdateOrCreate(name);
+    name === "Create" ? setTaskSelected({}) : null;
     setOpenDialogCreateOrUpdate(true);
   };
 
@@ -79,13 +76,13 @@ export default function App() {
         >
           <TasksListView
             tasks={tasks}
-            taskSelected={taskSelected}
+            setTasks={setTasks}
             setTaskSelected={setTaskSelected}
             handleClickCreateOrUpdateTask={handleClickCreateOrUpdateTask}
             setOpenDialogDelete={setOpenDialogDelete}
           />
           <Divider orientation="vertical" variant="middle" flexItem />
-          <TaskDetailsView />
+          {Object.keys(taskSelected).length ? <TaskDetailsView taskSelected={taskSelected} handleClickCreateOrUpdateTask={handleClickCreateOrUpdateTask}/> : <Typography variant="h5" component="div" color="text.secondary">Select a task</Typography>}
         </Grid>
 
         <DeleteDialog

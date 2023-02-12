@@ -48,7 +48,7 @@ export default function CreateOrUpdateDialog({
           fullWidth
           helperText={taskNameHelperText}
           variant="outlined"
-          value={taskSelected.name}
+          value={taskSelected?.name}
           onChange={(e) => {
             setTaskSelected({
               ...taskSelected,
@@ -61,7 +61,7 @@ export default function CreateOrUpdateDialog({
           margin="normal"
           label="Description"
           multiline
-          value={taskSelected.description}
+          value={taskSelected?.description}
           fullWidth
           placeholder="Some description"
           onChange={(e) => {
@@ -74,7 +74,7 @@ export default function CreateOrUpdateDialog({
         {/* DATEPICKER */}
         <DesktopDatePicker
           label="Date"
-          value={taskSelected.date}
+          value={taskSelected?.date}
           disablePast
           onChange={(newValue) => {
             setTaskSelected({
