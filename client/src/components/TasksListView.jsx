@@ -7,6 +7,7 @@ import {
   Stack,
   ToggleButton,
   ToggleButtonGroup,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import Delete from "@mui/icons-material/Delete";
@@ -20,7 +21,7 @@ export default function TasksListView({
   tasks,
   setTasks,
   setTaskSelected,
-  handleClickCreateOrUpdateTask,
+  handleClickCreateTask,
   setOpenDialogDelete,
 }) {
   const [sortingType, setSortingType] = useState("");
@@ -91,25 +92,39 @@ export default function TasksListView({
           exclusive
           onChange={handleSortingType}
         >
-          <ToggleButton value="name">
-            <SortByAlpha />
-          </ToggleButton>
-          <ToggleButton value="date">
-            <DateRange />
-          </ToggleButton>
-          <ToggleButton value="completed">
-            <Rule />
-          </ToggleButton>
+          <Tooltip title="Order by Name">
+            <ToggleButton value="name">
+              <SortByAlpha />
+            </ToggleButton>
+          </Tooltip>
+          <Tooltip title="Order by Date">
+            <ToggleButton value="date">
+              <DateRange />
+            </ToggleButton>
+          </Tooltip>
+          <Tooltip title="Order by Completed">
+            <ToggleButton value="completed">
+              <Rule />
+            </ToggleButton>
+          </Tooltip>
         </ToggleButtonGroup>
       </Grid>
       <Grid>
         {tasks.map((task, index) => (
           <Grid key={index} container direction="row">
             <Grid>
-              <Checkbox
-                checked={task.completed}
-                onChange={() => handleChangeCompleted(task.id)}
-              />
+              <Tooltip
+                title={
+                  task.completed
+                    ? "Mark task as uncompleted"
+                    : "Mark task as completed"
+                }
+              >
+                <Checkbox
+                  checked={task.completed}
+                  onChange={() => handleChangeCompleted(task.id)}
+                />
+              </Tooltip>
               <ToggleButton
                 value={task.id}
                 selected={false}
@@ -118,9 +133,11 @@ export default function TasksListView({
               >
                 {task.name}
               </ToggleButton>
-              <IconButton color="error" onClick={handleClickDeleteTask}>
-                <Delete />
-              </IconButton>
+              <Tooltip title="Delete Task">
+                <IconButton color="error" onClick={handleClickDeleteTask}>
+                  <Delete />
+                </IconButton>
+              </Tooltip>
             </Grid>
           </Grid>
         ))}
@@ -137,7 +154,7 @@ export default function TasksListView({
             variant="contained"
             color="success"
             endIcon={<PostAdd />}
-            onClick={handleClickCreateOrUpdateTask}
+            onClick={handleClickCreateTask}
           >
             Create
           </Button>

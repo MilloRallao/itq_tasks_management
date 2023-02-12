@@ -1,62 +1,66 @@
-import React, { useState } from "react";
-import "./App.css";
+import React, { useEffect, useState } from "react";
+import { SnackbarProvider } from "notistack";
 import { Divider, Typography } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
-import { SnackbarProvider } from "notistack";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import TasksListView from "./components/TasksListView";
 import DeleteDialog from "./components/DeleteDialog";
-import CreateOrUpdateDialog from "./components/CreateOrUpdateDialog";
+import CreateDialog from "./components/CreateDialog";
+import UpdateDialog from "./components/UpdateDialog";
 import TaskDetailsView from "./components/TaskDetailsView";
 import TopBar from "./components/TopBar";
-
-const originalTasks = [
-  {
-    id: 1,
-    name: "Recoger la mierda del perro",
-    description: "Recoger la caca de Luchi antes de que venga mi madre",
-    completed: false,
-    date: "Feb, 14 2023 12:00",
-  },
-  {
-    id: 2,
-    name: "Zacer los deberes",
-    description: "Matemáticas, física y filosofía",
-    completed: true,
-    date: "Feb, 10 2023 12:00",
-  },
-  {
-    id: 3,
-    name: "Ir al médico",
-    description: "Preguntar por análisis de sangre y el colesterol alto",
-    completed: false,
-    date: "Feb, 12 2023 12:00",
-  },
-];
+import axios from "axios";
 
 export default function App() {
-  const [tasks, setTasks] = useState(originalTasks);
-  const [updateOrCreate, setUpdateOrCreate] = useState("");
+  const [tasks, setTasks] = useState([]);
   const [taskSelected, setTaskSelected] = useState({});
-  const [openDialogDelete, setOpenDialogDelete] = useState(false);
-  const [openDialogCreateOrUpdate, setOpenDialogCreateOrUpdate] =
-    useState(false);
-  const [taskNameHelperText, setTaskNameHelperText] = useState("");
-  const [taskNameError, setTaskNameError] = useState(false);
 
-  const handleClickCreateOrUpdateTask = (e) => {
-    const { name } = e.target;
-    setUpdateOrCreate(name);
-    name === "Create" ? setTaskSelected({}) : null;
-    setOpenDialogCreateOrUpdate(true);
+  const [openDialogDelete, setOpenDialogDelete] = useState(false);
+  const [openDialogCreate, setOpenDialogCreate] = useState(false);
+  const [openDialogUpdate, setOpenDialogUpdate] = useState(false);
+
+  const [taskErrors, setTaskErrors] = useState({
+    name: true,
+    description: true,
+  });
+  const [taskHelperTexts, setTaskHelperTexts] = useState({
+    name: "",
+    description: "",
+  });
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:4000/")
+      .then((response) => {
+        console.log(response);
+        setTasks(response);
+      })
+      .catch((error) => {
+        console.log("ERROR ON GET TASKS:", error);
+      });
+  }, []);
+
+  const handleClickCreateTask = () => {
+    setOpenDialogCreate(true);
+  };
+
+  const handleClickUpdateTask = () => {
+    setOpenDialogUpdate(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialogDelete(false);
-    setOpenDialogCreateOrUpdate(false);
-    setTaskNameHelperText("");
-    setTaskNameError(false);
+    setOpenDialogCreate(false);
+    setOpenDialogUpdate(false);
+    setTaskErrors({
+      name: false,
+      description: false,
+    });
+    setTaskHelperTexts({
+      name: "",
+      description: "",
+    });
   };
 
   return (
@@ -78,25 +82,46 @@ export default function App() {
             tasks={tasks}
             setTasks={setTasks}
             setTaskSelected={setTaskSelected}
-            handleClickCreateOrUpdateTask={handleClickCreateOrUpdateTask}
+            handleClickCreateTask={handleClickCreateTask}
             setOpenDialogDelete={setOpenDialogDelete}
           />
           <Divider orientation="vertical" variant="middle" flexItem />
-          {Object.keys(taskSelected).length ? <TaskDetailsView taskSelected={taskSelected} handleClickCreateOrUpdateTask={handleClickCreateOrUpdateTask}/> : <Typography variant="h5" component="div" color="text.secondary">Select a task</Typography>}
+          {Object.keys(taskSelected).length ? (
+            <TaskDetailsView
+              taskSelected={taskSelected}
+              handleClickUpdateTask={handleClickUpdateTask}
+            />
+          ) : (
+            <Typography variant="h5" component="div" color="text.secondary">
+              Select a task
+            </Typography>
+          )}
         </Grid>
 
         <DeleteDialog
           openDialogDelete={openDialogDelete}
           handleCloseDialog={handleCloseDialog}
         />
-        <CreateOrUpdateDialog
-          openDialogCreateOrUpdate={openDialogCreateOrUpdate}
+        <CreateDialog
+          openDialogCreate={openDialogCreate}
           handleCloseDialog={handleCloseDialog}
-          updateOrCreate={updateOrCreate}
-          taskNameError={taskNameError}
-          taskNameHelperText={taskNameHelperText}
+          taskErrors={taskErrors}
+          setTaskErrors={setTaskErrors}
+          taskHelperTexts={taskHelperTexts}
+          setTaskHelperTexts={setTaskHelperTexts}
+          setTasks={setTasks}
+        />
+        <UpdateDialog
+          openDialogUpdate={openDialogUpdate}
+          handleCloseDialog={handleCloseDialog}
+          taskErrors={taskErrors}
+          setTaskErrors={setTaskErrors}
+          taskHelperTexts={taskHelperTexts}
+          setTaskHelperTexts={setTaskHelperTexts}
           taskSelected={taskSelected}
           setTaskSelected={setTaskSelected}
+          tasks={tasks}
+          setTasks={setTasks}
         />
       </LocalizationProvider>
     </SnackbarProvider>
