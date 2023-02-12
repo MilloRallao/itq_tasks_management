@@ -1,7 +1,15 @@
 # Tasks management (To-Do list)
 
-Tasks management made with Node.js (Express) for the backend and React for the frontend.
+Tasks management made with [Express](https://expressjs.com/) for the backend and [React](https://es.reactjs.org/) for the frontend plus Material UI [(MUI)](https://mui.com/) for UI layout.
 Without databases, information stores locally in server and hasn't persistency. It comes with 3 tasks included by default.
+
+### Third-party packages used
+- [NotiStack](https://notistack.com/).
+- [Nodemon](https://nodemon.io/).
+- [Cors](https://www.npmjs.com/package/cors).
+- [Morgan](https://www.npmjs.com/package/morgan).
+- [Moment](https://momentjs.com/).
+- [Axios](https://axios-http.com/es/docs/intro).
 
 ## Install Project
 
