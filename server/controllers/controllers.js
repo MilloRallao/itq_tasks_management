@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 let originalTasks = [
   {
     id: 1,
@@ -32,13 +34,31 @@ export const getTasks = (req, res) => {
 };
 
 // Create a task and return all tasks
-export const createTask = (req, res) => {
-  maxID++;
-  originalTasks.push({
-    id: maxID,
-    ...req.body,
-  });
-  res.json(originalTasks);
+export const createTask = (req, res, next) => {
+  if (req.body.name.length > 40) {
+    const error = new Error("Task name too long. Max 40 characters");
+    error.status = 500;
+    return next(error);
+  } else if(req.body.description.length > 250){
+    const error = new Error("Task description too long. Max 250 characters");
+    error.status = 500;
+    return next(error);
+  } else if(typeof req.body.completed !== "boolean"){
+    const error = new Error("Completed field must be boolean type");
+    error.status = 500;
+    return next(error);
+  } else if(!moment(req.body.date).isValid()){
+    const error = new Error("Invalid date");
+    error.status = 500;
+    return next(error);
+  } else {
+    maxID++;
+    originalTasks.push({
+      id: maxID,
+      ...req.body,
+    });
+    res.json(originalTasks);
+  }
 };
 
 // Return one task

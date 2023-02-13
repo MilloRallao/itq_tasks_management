@@ -48,6 +48,9 @@ export default function CreateDialog({
           name: "",
         };
       });
+      return new Promise((resolve, reject) => {
+        resolve(false);
+      });
     } else if (newTask.name?.length > 40) {
       setTaskErrors((prevState) => {
         return {
@@ -61,6 +64,9 @@ export default function CreateDialog({
           name: "Task name too long. Max 40 characters",
         };
       });
+      return new Promise((resolve, reject) => {
+        resolve(true);
+      });
     } else {
       setTaskErrors((prevState) => {
         return {
@@ -73,6 +79,9 @@ export default function CreateDialog({
           description: prevState.description,
           name: "Please, insert a task name",
         };
+      });
+      return new Promise((resolve, reject) => {
+        resolve(true);
       });
     }
   };
@@ -96,6 +105,9 @@ export default function CreateDialog({
           description: "",
         };
       });
+      return new Promise((resolve, reject) => {
+        resolve(false);
+      });
     } else if (newTask.description?.length > 250) {
       setTaskErrors((prevState) => {
         return {
@@ -108,6 +120,9 @@ export default function CreateDialog({
           name: prevState.name,
           description: "Task description too long. Max 250 characters",
         };
+      });
+      return new Promise((resolve, reject) => {
+        resolve(true);
       });
     } else {
       setTaskErrors((prevState) => {
@@ -122,24 +137,43 @@ export default function CreateDialog({
           description: "Please, insert a task description",
         };
       });
+      return new Promise((resolve, reject) => {
+        resolve(true);
+      });
     }
   };
 
-  // Handle all validations
-  const validations = () => {
-    checkName();
-    checkDescription();
+  // Validate date field
+  const checkDate = () => {
+    if (moment(newTask.date).isValid()) {
+      return new Promise((resolve, reject) => {
+        resolve(false);
+      });
+    } else {
+      enqueueSnackbar("Invalid date format", { variant: "error" });
+      return new Promise((resolve, reject) => {
+        resolve(true);
+      });
+    }
   };
 
   // Request to create a task
-  const handleCreateTask = () => {
-    validations();
-    if (!taskErrors.name && !taskErrors.description) {
+  const handleCreateTask = async () => {
+    const nameError = await checkName();
+    const descriptionError = await checkDescription();
+    const dateError = await checkDate();
+    if (!nameError && !descriptionError && !dateError) {
       axios
         .post("http://localhost:4000/create", newTask)
         .then((response) => {
           setTasks(response.data);
           enqueueSnackbar("Task created successfully", { variant: "success" });
+          setNewTask({
+            name: "",
+            description: "",
+            completed: false,
+            date: moment(new Date()).format("MMM, DD YYYY HH:mm").toString(),
+          });
           handleCloseDialog();
         })
         .catch((error) => {
