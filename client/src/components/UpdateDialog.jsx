@@ -44,6 +44,9 @@ export default function UpdateDialog({
           name: "",
         };
       });
+      return new Promise((resolve, reject) => {
+        resolve(false);
+      });
     } else if (taskSelected.name?.length > 40) {
       setTaskErrors((prevState) => {
         return {
@@ -57,6 +60,9 @@ export default function UpdateDialog({
           name: "Task name too long. Max 40 characters",
         };
       });
+      return new Promise((resolve, reject) => {
+        resolve(true);
+      });
     } else {
       setTaskErrors((prevState) => {
         return {
@@ -69,6 +75,9 @@ export default function UpdateDialog({
           description: prevState.description,
           name: "Please, insert a task name",
         };
+      });
+      return new Promise((resolve, reject) => {
+        resolve(true);
       });
     }
   };
@@ -92,6 +101,9 @@ export default function UpdateDialog({
           description: "",
         };
       });
+      return new Promise((resolve, reject) => {
+        resolve(false);
+      });
     } else if (taskSelected.description?.length > 250) {
       setTaskErrors((prevState) => {
         return {
@@ -104,6 +116,9 @@ export default function UpdateDialog({
           name: prevState.name,
           description: "Task description too long. Max 250 characters",
         };
+      });
+      return new Promise((resolve, reject) => {
+        resolve(true);
       });
     } else {
       setTaskErrors((prevState) => {
@@ -118,19 +133,32 @@ export default function UpdateDialog({
           description: "Please, insert a task description",
         };
       });
+      return new Promise((resolve, reject) => {
+        resolve(true);
+      });
     }
   };
 
-  // Handle all validations
-  const validations = () => {
-    checkName();
-    checkDescription();
+  // Validate date field
+  const checkDate = () => {
+    if (moment(taskSelected.date).isValid()) {
+      return new Promise((resolve, reject) => {
+        resolve(false);
+      });
+    } else {
+      enqueueSnackbar("Invalid date format", { variant: "error" });
+      return new Promise((resolve, reject) => {
+        resolve(true);
+      });
+    }
   };
 
   // Request to update a task
-  const handleUpdateTask = () => {
-    validations();
-    if (!taskErrors.name && !taskErrors.description) {
+  const handleUpdateTask = async () => {
+    const nameError = await checkName();
+    const descriptionError = await checkDescription();
+    const dateError = await checkDate();
+    if (!nameError && !descriptionError && !dateError) {
       axios
         .put(`http://localhost:4000/${taskSelected.id}`, taskSelected)
         .then((response) => {
@@ -165,8 +193,8 @@ export default function UpdateDialog({
           onChange={(e) => {
             setTaskSelected({
               ...taskSelected,
-            name: e.target.value,
-            })
+              name: e.target.value,
+            });
           }}
         />
         {/* DESCRIPTION */}
