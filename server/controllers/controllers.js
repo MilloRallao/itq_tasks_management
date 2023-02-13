@@ -24,6 +24,8 @@ let originalTasks = [
   },
 ];
 
+let maxID = 3;
+
 // Return all tasks
 export const getTasks = (req, res) => {
   res.json(originalTasks);
@@ -31,9 +33,9 @@ export const getTasks = (req, res) => {
 
 // Create a task and return all tasks
 export const createTask = (req, res) => {
-  const originalTasksOrderedByID = originalTasks.sort((a, b) => b.id - a.id);
+  maxID++;
   originalTasks.push({
-    id: originalTasksOrderedByID[0].id + 1,
+    id: maxID,
     ...req.body,
   });
   res.json(originalTasks);
@@ -66,8 +68,8 @@ export const updateTask = (req, res) => {
 
 // Delete a task and return the rest
 export const deleteTask = (req, res) => {
-  const newTasks = originalTasks.filter(
+  originalTasks = originalTasks.filter(
     (task, index) => task.id != req.params.id
   );
-  res.json(newTasks);
+  res.json(originalTasks);
 };

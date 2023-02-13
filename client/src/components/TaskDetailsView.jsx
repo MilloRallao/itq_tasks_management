@@ -22,7 +22,7 @@ export default function TaskDetailsView({
           {taskSelected.name}
         </Typography>
         <Typography sx={{ mb: 1.5, fontSize: 14 }} color={taskSelected.completed ? "primary" : "error"}>
-          {taskSelected.completed ? "Completed" : "Uncompleted"}
+          {taskSelected.completed ? "Completed" : "Incompleted"}
         </Typography>
         <Typography variant="body2">{taskSelected.description}</Typography>
       </CardContent>

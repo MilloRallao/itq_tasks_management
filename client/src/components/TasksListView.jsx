@@ -87,15 +87,15 @@ export default function TasksListView({
   // Request to update the completed field of a task
   const handleChangeCompleted = (task) => {
     axios
-      .put(`http://localhost:4000/${task.id}`, {updatingField: "completed"})
+      .put(`http://localhost:4000/${task.id}`, { updatingField: "completed" })
       .then((response) => {
         console.log(response);
         setTasks(response.data.originalTasks);
         setTaskSelected(response.data.taskUpdated);
-        if(response.data.taskUpdated.completed){
+        if (response.data.taskUpdated.completed) {
           enqueueSnackbar("Task complete", { variant: "info" });
-        }else{
-          enqueueSnackbar("Task uncomplete", { variant: "warning" });
+        } else {
+          enqueueSnackbar("Task incomplete", { variant: "warning" });
         }
       })
       .catch((error) => {
@@ -116,6 +116,7 @@ export default function TasksListView({
       </Grid>
       <Grid>
         <ToggleButtonGroup
+          color="primary"
           value={sortingType}
           exclusive
           onChange={handleSortingType}
@@ -144,7 +145,7 @@ export default function TasksListView({
               <Tooltip
                 title={
                   task.completed
-                    ? "Mark task as uncompleted"
+                    ? "Mark task as incompleted"
                     : "Mark task as completed"
                 }
               >
