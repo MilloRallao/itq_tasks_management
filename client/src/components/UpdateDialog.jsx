@@ -22,6 +22,7 @@ export default function UpdateDialog({
   taskHelperTexts,
   setTaskHelperTexts,
   setTasks,
+  setAuxTasks,
 }) {
   const { enqueueSnackbar } = useSnackbar();
 
@@ -163,6 +164,7 @@ export default function UpdateDialog({
         .put(`http://localhost:4000/${taskSelected.id}`, taskSelected)
         .then((response) => {
           setTasks(response.data.originalTasks);
+          setAuxTasks(response.data.originalTasks);
           setTaskSelected(taskSelected);
           enqueueSnackbar("Task updated successfully", { variant: "success" });
           handleCloseDialog();
@@ -218,7 +220,6 @@ export default function UpdateDialog({
         <DesktopDatePicker
           label="Date"
           value={taskSelected.date}
-          disablePast
           onChange={(newValue) => {
             setTaskSelected({
               ...taskSelected,

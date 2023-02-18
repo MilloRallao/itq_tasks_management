@@ -22,6 +22,8 @@ import Rule from "@mui/icons-material/Rule";
 export default function TasksListView({
   tasks,
   setTasks,
+  auxTasks,
+  taskSelected,
   setTaskSelected,
   handleClickCreateTask,
   setOpenDialogDelete,
@@ -29,18 +31,33 @@ export default function TasksListView({
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [sortingType, setSortingType] = useState("");
+  const [toggleTaskSelected, setToggleTaskSelected] = useState({
+    id: undefined,
+    active: false,
+  });
 
   // Request to get a task
   const handleSelectTask = (e) => {
     const { value } = e.target;
-    axios
-      .get(`http://localhost:4000/${value}`)
-      .then((response) => {
-        setTaskSelected(response.data[0]);
-      })
-      .catch((error) => {
-        console.log("ERROR GETTING A TASK:", error);
-      });
+    setToggleTaskSelected((prevState) => {
+      // Only do the request when the task is inactive or click in a different task
+      if (!toggleTaskSelected.active || prevState.id != value) {
+        axios
+          .get(`http://localhost:4000/${value}`)
+          .then((response) => {
+            setTaskSelected(response.data[0]);
+          })
+          .catch((error) => {
+            console.log("ERROR GETTING A TASK:", error);
+          });
+      } else {
+        setTaskSelected({});
+      }
+      return {
+        id: value,
+        active: prevState.id != value || !prevState.active, // state depends of tasks ID's or previous active state
+      };
+    });
   };
 
   // Open dialog to confirm deleting a task
@@ -52,9 +69,25 @@ export default function TasksListView({
   // Handle sorting by different ways
   const handleSortingType = (e, newSortingType) => {
     setSortingType(newSortingType);
-    // Sorting by name
-    if (newSortingType === "name") {
-      tasks.sort(function (a, b) {
+    // Sorting by name (Only if not selected previously)
+    if (newSortingType === "name" && sortingType !== "name") {
+      setTasks(tasks.sort(sortingFunction(newSortingType)));
+    } else if (newSortingType === "date" && sortingType !== "date") {
+      // Sorting by date (Only if not selected previously)
+      setTasks(tasks.sort(sortingFunction(newSortingType)));
+    } else if (newSortingType === "completed" && sortingType !== "completed") {
+      // Filtering by completed (Only if not selected previously)
+      setTasks(tasks.filter((a) => a.completed === true));
+    } else {
+      // If some button are selected, it becomes unselected and original tasks are showed
+      setSortingType("");
+      setTasks(auxTasks);
+    }
+  };
+
+  const sortingFunction = (type) => {
+    return function (a, b) {
+      if (type === "name") {
         let nameA = a.name.toUpperCase(); // ignore upper and lowercase
         let nameB = b.name.toUpperCase();
 
@@ -67,21 +100,10 @@ export default function TasksListView({
 
         // names equal
         return 0;
-      });
-    } else if (newSortingType === "date") {
-      // Sorting by date
-      tasks.sort(function (a, b) {
+      } else if (type === "date") {
         return moment(a.date) - moment(b.date);
-      });
-    } else if (newSortingType === "completed") {
-      // Sorting by completed
-      tasks.sort(function (a, b) {
-        if (a.completed === b.completed) {
-          return 0;
-        }
-        return a.completed ? -1 : 1;
-      });
-    }
+      }
+    };
   };
 
   // Request to update the completed field of a task
@@ -89,9 +111,8 @@ export default function TasksListView({
     axios
       .put(`http://localhost:4000/${task.id}`, { updatingField: "completed" })
       .then((response) => {
-        console.log(response);
         setTasks(response.data.originalTasks);
-        setTaskSelected(response.data.taskUpdated);
+        Object.keys(taskSelected).length === 0 ? null : setTaskSelected(response.data.taskUpdated);
         if (response.data.taskUpdated.completed) {
           enqueueSnackbar("Task complete", { variant: "info" });
         } else {
@@ -122,17 +143,20 @@ export default function TasksListView({
           onChange={handleSortingType}
         >
           <Tooltip title="Order by Name">
-            <ToggleButton value="name">
+            <ToggleButton value="name" selected={sortingType === "name"}>
               <SortByAlpha />
             </ToggleButton>
           </Tooltip>
           <Tooltip title="Order by Date">
-            <ToggleButton value="date">
+            <ToggleButton value="date" selected={sortingType === "date"}>
               <DateRange />
             </ToggleButton>
           </Tooltip>
-          <Tooltip title="Order by Completed">
-            <ToggleButton value="completed">
+          <Tooltip title="Filter by Completed">
+            <ToggleButton
+              value="completed"
+              selected={sortingType === "completed"}
+            >
               <Rule />
             </ToggleButton>
           </Tooltip>
@@ -156,7 +180,9 @@ export default function TasksListView({
               </Tooltip>
               <ToggleButton
                 value={task.id}
-                selected={false}
+                selected={
+                  toggleTaskSelected.id == task.id && toggleTaskSelected.active
+                }
                 onChange={handleSelectTask}
                 sx={{ textDecorationLine: task.completed && "line-through" }}
               >

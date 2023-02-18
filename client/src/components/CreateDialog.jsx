@@ -20,6 +20,7 @@ export default function CreateDialog({
   taskHelperTexts,
   setTaskHelperTexts,
   setTasks,
+  setAuxTasks,
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [newTask, setNewTask] = useState({
@@ -167,6 +168,7 @@ export default function CreateDialog({
         .post("http://localhost:4000/create", newTask)
         .then((response) => {
           setTasks(response.data);
+          setAuxTasks(response.data);
           enqueueSnackbar("Task created successfully", { variant: "success" });
           setNewTask({
             name: "",
@@ -227,7 +229,6 @@ export default function CreateDialog({
         <DesktopDatePicker
           label="Date"
           value={newTask.date}
-          disablePast
           onChange={(newValue) => {
             setNewTask({
               ...newTask,

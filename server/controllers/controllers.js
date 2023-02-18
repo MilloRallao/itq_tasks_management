@@ -69,8 +69,18 @@ export const readTask = (req, res) => {
 };
 
 // Update one task (Or only "completed" field) and return all tasks (And the task updated in case of updating "completed" field)
-export const updateTask = (req, res) => {
+export const updateTask = (req, res, next) => {
   let taskUpdated;
+
+  // If ID doesn't exist
+  const taskNotFound = originalTasks.filter((a) => a.id == req.params.id);
+  
+  if(taskNotFound.length === 0){
+    const error = new Error("Invalid ID");
+    error.status = 404;
+    return next(error);
+  }
+
   originalTasks = originalTasks.map((task, index) => {
     if (task.id == req.params.id) {
       if (req.body.updatingField === "completed") {
@@ -83,6 +93,7 @@ export const updateTask = (req, res) => {
 
     return task;
   });
+
   res.json({ originalTasks, taskUpdated });
 };
 

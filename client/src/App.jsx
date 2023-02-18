@@ -14,6 +14,7 @@ import TopBar from "./components/TopBar";
 
 export default function App() {
   const [tasks, setTasks] = useState([]);
+  const [auxTasks, setAuxTasks] = useState([]);
   const [taskSelected, setTaskSelected] = useState({});
 
   const [taskDeletedID, setTaskDeletedID] = useState();
@@ -23,8 +24,8 @@ export default function App() {
   const [openDialogUpdate, setOpenDialogUpdate] = useState(false);
 
   const [taskErrors, setTaskErrors] = useState({
-    name: true,
-    description: true,
+    name: undefined,
+    description: undefined,
   });
   const [taskHelperTexts, setTaskHelperTexts] = useState({
     name: "",
@@ -37,6 +38,7 @@ export default function App() {
       .get("http://localhost:4000/")
       .then((response) => {
         setTasks(response.data);
+        setAuxTasks(response.data);
       })
       .catch((error) => {
         console.log("ERROR ON GET TASKS:", error);
@@ -86,6 +88,8 @@ export default function App() {
           <TasksListView
             tasks={tasks}
             setTasks={setTasks}
+            auxTasks={auxTasks}
+            taskSelected={taskSelected}
             setTaskSelected={setTaskSelected}
             handleClickCreateTask={handleClickCreateTask}
             setOpenDialogDelete={setOpenDialogDelete}
@@ -106,6 +110,8 @@ export default function App() {
 
         <DeleteDialog
           setTasks={setTasks}
+          setAuxTasks={setAuxTasks}
+          setTaskSelected={setTaskSelected}
           taskDeletedID={taskDeletedID}
           openDialogDelete={openDialogDelete}
           handleCloseDialog={handleCloseDialog}
@@ -118,6 +124,7 @@ export default function App() {
           taskHelperTexts={taskHelperTexts}
           setTaskHelperTexts={setTaskHelperTexts}
           setTasks={setTasks}
+          setAuxTasks={setAuxTasks}
         />
         <UpdateDialog
           openDialogUpdate={openDialogUpdate}
@@ -129,6 +136,7 @@ export default function App() {
           taskSelected={taskSelected}
           setTaskSelected={setTaskSelected}
           setTasks={setTasks}
+          setAuxTasks={setAuxTasks}
         />
       </LocalizationProvider>
     </SnackbarProvider>

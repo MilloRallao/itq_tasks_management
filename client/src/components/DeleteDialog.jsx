@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@mui/material";
 
-export default function DeleteDialog({ setTasks, taskDeletedID, openDialogDelete, handleCloseDialog }) {
+export default function DeleteDialog({ setTasks, setAuxTasks, setTaskSelected, taskDeletedID, openDialogDelete, handleCloseDialog }) {
   const { enqueueSnackbar } = useSnackbar();
 
   // Request to delete a task
@@ -19,7 +19,9 @@ export default function DeleteDialog({ setTasks, taskDeletedID, openDialogDelete
       .delete(`http://localhost:4000/${taskDeletedID}`)
       .then((response) => {
         setTasks(response.data);
+        setAuxTasks(response.data);
         enqueueSnackbar("Task deleted successfully", { variant: "success" });
+        setTaskSelected({});
       })
       .catch((error) => {
         console.log("ERROR DELETING TASK:", error);
