@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import moment from "moment";
 import { SnackbarProvider } from "notistack";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
@@ -7,21 +8,27 @@ import Grid from "@mui/material/Unstable_Grid2";
 import { Divider, Typography } from "@mui/material";
 import TasksListView from "./components/TasksListView";
 import DeleteDialog from "./components/DeleteDialog";
-import CreateDialog from "./components/CreateDialog";
-import UpdateDialog from "./components/UpdateDialog";
 import TaskDetailsView from "./components/TaskDetailsView";
 import TopBar from "./components/TopBar";
+import CreateUpdateDialog from "./components/CreateUpdateDialog";
 
 export default function App() {
+  const [requestType, setRequestType] = useState("");
   const [tasks, setTasks] = useState([]);
   const [auxTasks, setAuxTasks] = useState([]);
   const [taskSelected, setTaskSelected] = useState({});
+  const [auxTaskSelected, setAuxTaskSelected] = useState({});
+  const [newTask, setNewTask] = useState({
+    name: "",
+    description: "",
+    completed: false,
+    date: moment(new Date()).format("MMM, DD YYYY HH:mm").toString(),
+  });
 
   const [taskDeletedID, setTaskDeletedID] = useState();
 
+  const [openDialog, setOpenDialog] = useState(false);
   const [openDialogDelete, setOpenDialogDelete] = useState(false);
-  const [openDialogCreate, setOpenDialogCreate] = useState(false);
-  const [openDialogUpdate, setOpenDialogUpdate] = useState(false);
 
   const [taskErrors, setTaskErrors] = useState({
     name: undefined,
@@ -47,19 +54,27 @@ export default function App() {
 
   // Open dialog form to create a task
   const handleClickCreateTask = () => {
-    setOpenDialogCreate(true);
+    setRequestType("create");
+    setNewTask({
+      name: "",
+      description: "",
+      completed: false,
+      date: moment(new Date()).format("MMM, DD YYYY HH:mm").toString(),
+    });
+    setOpenDialog(true);
   };
 
   // Open dialog form to update a task
   const handleClickUpdateTask = () => {
-    setOpenDialogUpdate(true);
+    setRequestType("update");
+    setAuxTaskSelected(taskSelected);
+    setOpenDialog(true);
   };
 
   // Handle closing dialogs and resets errors
   const handleCloseDialog = () => {
     setOpenDialogDelete(false);
-    setOpenDialogCreate(false);
-    setOpenDialogUpdate(false);
+    setOpenDialog(false);
     setTaskErrors({
       name: false,
       description: false,
@@ -116,8 +131,9 @@ export default function App() {
           openDialogDelete={openDialogDelete}
           handleCloseDialog={handleCloseDialog}
         />
-        <CreateDialog
-          openDialogCreate={openDialogCreate}
+        <CreateUpdateDialog
+          requestType={requestType}
+          openDialog={openDialog}
           handleCloseDialog={handleCloseDialog}
           taskErrors={taskErrors}
           setTaskErrors={setTaskErrors}
@@ -125,18 +141,11 @@ export default function App() {
           setTaskHelperTexts={setTaskHelperTexts}
           setTasks={setTasks}
           setAuxTasks={setAuxTasks}
-        />
-        <UpdateDialog
-          openDialogUpdate={openDialogUpdate}
-          handleCloseDialog={handleCloseDialog}
-          taskErrors={taskErrors}
-          setTaskErrors={setTaskErrors}
-          taskHelperTexts={taskHelperTexts}
-          setTaskHelperTexts={setTaskHelperTexts}
-          taskSelected={taskSelected}
+          newTask={newTask}
+          setNewTask={setNewTask}
           setTaskSelected={setTaskSelected}
-          setTasks={setTasks}
-          setAuxTasks={setAuxTasks}
+          auxTaskSelected={auxTaskSelected}
+          setAuxTaskSelected={setAuxTaskSelected}
         />
       </LocalizationProvider>
     </SnackbarProvider>

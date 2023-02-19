@@ -70,14 +70,16 @@ export default function TasksListView({
   const handleSortingType = (e, newSortingType) => {
     setSortingType(newSortingType);
     // Sorting by name (Only if not selected previously)
-    if (newSortingType === "name" && sortingType !== "name") {
-      setTasks(tasks.sort(sortingFunction(newSortingType)));
-    } else if (newSortingType === "date" && sortingType !== "date") {
-      // Sorting by date (Only if not selected previously)
+    if (
+      (newSortingType === "name" && sortingType !== "name") ||
+      (newSortingType === "date" && sortingType !== "date")
+    ) {
       setTasks(tasks.sort(sortingFunction(newSortingType)));
     } else if (newSortingType === "completed" && sortingType !== "completed") {
       // Filtering by completed (Only if not selected previously)
       setTasks(tasks.filter((a) => a.completed === true));
+      setTaskSelected({});
+      setToggleTaskSelected({ id: undefined, active: false });
     } else {
       // If some button are selected, it becomes unselected and original tasks are showed
       setSortingType("");
@@ -112,7 +114,9 @@ export default function TasksListView({
       .put(`http://localhost:4000/${task.id}`, { updatingField: "completed" })
       .then((response) => {
         setTasks(response.data.originalTasks);
-        Object.keys(taskSelected).length === 0 ? null : setTaskSelected(response.data.taskUpdated);
+        Object.keys(taskSelected).length === 0
+          ? null
+          : setTaskSelected(response.data.taskUpdated);
         if (response.data.taskUpdated.completed) {
           enqueueSnackbar("Task complete", { variant: "info" });
         } else {

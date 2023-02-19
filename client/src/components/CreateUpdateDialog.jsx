@@ -12,26 +12,33 @@ import {
 } from "@mui/material";
 import { DesktopDatePicker } from "@mui/x-date-pickers";
 
-export default function UpdateDialog({
-  openDialogUpdate,
+export default function CreateUpdateDialog({
+  requestType,
+  openDialog,
   handleCloseDialog,
-  taskSelected,
-  setTaskSelected,
   taskErrors,
   setTaskErrors,
   taskHelperTexts,
   setTaskHelperTexts,
   setTasks,
   setAuxTasks,
+  newTask,
+  setNewTask,
+  setTaskSelected,
+  auxTaskSelected,
+  setAuxTaskSelected,
 }) {
   const { enqueueSnackbar } = useSnackbar();
 
   // Validate name field (Max 40 characters and not empty)
   const checkName = () => {
     if (
-      "name" in taskSelected &&
-      taskSelected.name.length <= 40 &&
-      taskSelected.name.trim().length > 0
+      ("name" in newTask &&
+        newTask.name.length <= 40 &&
+        newTask.name.trim().length > 0) ||
+      ("name" in auxTaskSelected &&
+        auxTaskSelected.name.length <= 40 &&
+        auxTaskSelected.name.trim().length > 0)
     ) {
       setTaskErrors((prevState) => {
         return {
@@ -48,7 +55,7 @@ export default function UpdateDialog({
       return new Promise((resolve, reject) => {
         resolve(false);
       });
-    } else if (taskSelected.name?.length > 40) {
+    } else if (newTask.name?.length > 40 || auxTaskSelected.name?.length > 40) {
       setTaskErrors((prevState) => {
         return {
           description: prevState.description,
@@ -86,9 +93,12 @@ export default function UpdateDialog({
   // Validate description field (Max 250 characters and not empty)
   const checkDescription = () => {
     if (
-      "description" in taskSelected &&
-      taskSelected.description.length <= 250 &&
-      taskSelected.description.trim().length > 0
+      ("description" in newTask &&
+        newTask.description.length <= 250 &&
+        newTask.description.trim().length > 0) ||
+      ("description" in auxTaskSelected &&
+        auxTaskSelected.description.length <= 250 &&
+        auxTaskSelected.description.trim().length > 0)
     ) {
       setTaskErrors((prevState) => {
         return {
@@ -105,7 +115,10 @@ export default function UpdateDialog({
       return new Promise((resolve, reject) => {
         resolve(false);
       });
-    } else if (taskSelected.description?.length > 250) {
+    } else if (
+      newTask.description?.length > 250 ||
+      auxTaskSelected.description?.length > 250
+    ) {
       setTaskErrors((prevState) => {
         return {
           name: prevState.name,
@@ -142,7 +155,10 @@ export default function UpdateDialog({
 
   // Validate date field
   const checkDate = () => {
-    if (moment(taskSelected.date).isValid()) {
+    if (
+      moment(newTask.date).isValid() ||
+      moment(auxTaskSelected.date).isValid()
+    ) {
       return new Promise((resolve, reject) => {
         resolve(false);
       });
@@ -154,31 +170,59 @@ export default function UpdateDialog({
     }
   };
 
-  // Request to update a task
-  const handleUpdateTask = async () => {
+  // Request to create a task
+  const handleRequestTask = async () => {
     const nameError = await checkName();
     const descriptionError = await checkDescription();
     const dateError = await checkDate();
     if (!nameError && !descriptionError && !dateError) {
-      axios
-        .put(`http://localhost:4000/${taskSelected.id}`, taskSelected)
-        .then((response) => {
-          setTasks(response.data.originalTasks);
-          setAuxTasks(response.data.originalTasks);
-          setTaskSelected(taskSelected);
-          enqueueSnackbar("Task updated successfully", { variant: "success" });
-          handleCloseDialog();
-        })
-        .catch((error) => {
-          console.log("ERROR ON UPDATE TASK: ", error);
-          enqueueSnackbar("Error while updating task", { variant: "error" });
-        });
+      if (requestType === "create") {
+        axios
+          .post("http://localhost:4000/create", newTask)
+          .then((response) => {
+            setTasks(response.data);
+            setAuxTasks(response.data);
+            enqueueSnackbar("Task created successfully", {
+              variant: "success",
+            });
+            setNewTask({
+              name: "",
+              description: "",
+              completed: false,
+              date: moment(new Date()).format("MMM, DD YYYY HH:mm").toString(),
+            });
+            handleCloseDialog();
+          })
+          .catch((error) => {
+            console.log("ERROR ON CREATE TASK: ", error);
+            enqueueSnackbar("Error while creating task", { variant: "error" });
+          });
+      } else if (requestType === "update") {
+        axios
+          .put(`http://localhost:4000/${auxTaskSelected.id}`, auxTaskSelected)
+          .then((response) => {
+            setTasks(response.data.originalTasks);
+            setAuxTasks(response.data.originalTasks);
+            setAuxTaskSelected(auxTaskSelected);
+            setTaskSelected(auxTaskSelected);
+            enqueueSnackbar("Task updated successfully", {
+              variant: "success",
+            });
+            handleCloseDialog();
+          })
+          .catch((error) => {
+            console.log("ERROR ON UPDATE TASK: ", error);
+            enqueueSnackbar("Error while updating task", { variant: "error" });
+          });
+      }
     }
   };
 
   return (
-    <Dialog open={openDialogUpdate} onClose={handleCloseDialog}>
-      <DialogTitle sx={{ textAlign: "center" }}>Update Task</DialogTitle>
+    <Dialog open={openDialog} onClose={handleCloseDialog}>
+      <DialogTitle sx={{ textAlign: "center" }}>
+        {requestType === "create" ? "Create" : "Update"} Task
+      </DialogTitle>
       <DialogContent>
         {/* NAME */}
         <TextField
@@ -191,12 +235,17 @@ export default function UpdateDialog({
           fullWidth
           helperText={taskHelperTexts.name}
           variant="outlined"
-          value={taskSelected.name}
+          value={requestType === "create" ? newTask.name : auxTaskSelected.name}
           onChange={(e) => {
-            setTaskSelected({
-              ...taskSelected,
-              name: e.target.value,
-            });
+            requestType === "create"
+              ? setNewTask({
+                  ...newTask,
+                  name: e.target.value,
+                })
+              : setAuxTaskSelected({
+                  ...auxTaskSelected,
+                  name: e.target.value,
+                });
           }}
         />
         {/* DESCRIPTION */}
@@ -205,26 +254,44 @@ export default function UpdateDialog({
           label="Description"
           error={taskErrors.description}
           multiline
-          value={taskSelected.description}
+          value={
+            requestType === "create"
+              ? newTask.description
+              : auxTaskSelected.description
+          }
           fullWidth
           helperText={taskHelperTexts.description}
           placeholder="Some description"
           onChange={(e) => {
-            setTaskSelected({
-              ...taskSelected,
-              description: e.target.value,
-            });
+            requestType === "create"
+              ? setNewTask({
+                  ...newTask,
+                  description: e.target.value,
+                })
+              : setAuxTaskSelected({
+                  ...auxTaskSelected,
+                  description: e.target.value,
+                });
           }}
         />
         {/* DATEPICKER */}
         <DesktopDatePicker
           label="Date"
-          value={taskSelected.date}
+          value={requestType === "create" ? newTask.date : auxTaskSelected.date}
           onChange={(newValue) => {
-            setTaskSelected({
-              ...taskSelected,
-              date: moment(newValue).format("MMM, DD YYYY HH:mm").toString(),
-            });
+            requestType === "create"
+              ? setNewTask({
+                  ...newTask,
+                  date: moment(newValue)
+                    .format("MMM, DD YYYY HH:mm")
+                    .toString(),
+                })
+              : setAuxTaskSelected({
+                  ...auxTaskSelected,
+                  date: moment(newValue)
+                    .format("MMM, DD YYYY HH:mm")
+                    .toString(),
+                });
           }}
           renderInput={(params) => <TextField {...params} />}
         />
@@ -234,12 +301,12 @@ export default function UpdateDialog({
           Cancel
         </Button>
         <Button
-          onClick={handleUpdateTask}
+          onClick={handleRequestTask}
           color="success"
           variant="contained"
           autoFocus
         >
-          Update
+          {requestType === "create" ? "Create" : "Update"}
         </Button>
       </DialogActions>
     </Dialog>
