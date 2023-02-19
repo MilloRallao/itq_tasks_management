@@ -23,6 +23,7 @@ export default function TasksListView({
   tasks,
   setTasks,
   auxTasks,
+  setAuxTasks,
   taskSelected,
   setTaskSelected,
   handleClickCreateTask,
@@ -114,6 +115,7 @@ export default function TasksListView({
       .put(`http://localhost:4000/${task.id}`, { updatingField: "completed" })
       .then((response) => {
         setTasks(response.data.originalTasks);
+        setAuxTasks(response.data.originalTasks);
         Object.keys(taskSelected).length === 0
           ? null
           : setTaskSelected(response.data.taskUpdated);

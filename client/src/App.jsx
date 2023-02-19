@@ -104,6 +104,7 @@ export default function App() {
             tasks={tasks}
             setTasks={setTasks}
             auxTasks={auxTasks}
+            setAuxTasks={setAuxTasks}
             taskSelected={taskSelected}
             setTaskSelected={setTaskSelected}
             handleClickCreateTask={handleClickCreateTask}
