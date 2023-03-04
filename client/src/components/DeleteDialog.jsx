@@ -1,6 +1,4 @@
 import React from "react";
-import axios from "axios";
-import { useSnackbar } from "notistack";
 import {
   Button,
   Dialog,
@@ -9,29 +7,27 @@ import {
   DialogContentText,
   DialogTitle,
 } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
+import { closeDialog } from "../features/dialogs/dialogSlice";
+import { fetchDeleteTask } from "../features/tasks/taskSlice";
 
-export default function DeleteDialog({ setTasks, setAuxTasks, setTaskSelected, taskDeletedID, openDialogDelete, handleCloseDialog }) {
-  const { enqueueSnackbar } = useSnackbar();
+export default function DeleteDialog({ taskDeletedID }) {
+  const dialogOpen = useSelector((state) => state.dialogs["dialogDelete"]);
+  const dispatch = useDispatch();
 
   // Request to delete a task
   const handleDeleteTask = () => {
-    axios
-      .delete(`http://localhost:4000/${taskDeletedID}`)
-      .then((response) => {
-        setTasks(response.data);
-        setAuxTasks(response.data);
-        enqueueSnackbar("Task deleted successfully", { variant: "success" });
-        setTaskSelected({});
-      })
-      .catch((error) => {
-        console.log("ERROR DELETING TASK:", error);
-        enqueueSnackbar("Error while deleting task", { variant: "error" });
-      });
+    dispatch(fetchDeleteTask(taskDeletedID));
     handleCloseDialog();
   };
 
+  // Handle closing dialog
+  const handleCloseDialog = () => {
+    dispatch(closeDialog("dialogDelete"));
+  };
+
   return (
-    <Dialog open={openDialogDelete} onClose={handleCloseDialog}>
+    <Dialog open={dialogOpen} onClose={handleCloseDialog}>
       <DialogTitle sx={{ textAlign: "center" }}>Delete Task</DialogTitle>
       <DialogContent>
         <DialogContentText>

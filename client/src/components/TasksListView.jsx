@@ -1,7 +1,5 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useMemo, useState } from "react";
 import moment from "moment";
-import { useSnackbar } from "notistack";
 import Grid from "@mui/material/Unstable_Grid2/Grid2";
 import {
   Button,
@@ -18,24 +16,22 @@ import PostAdd from "@mui/icons-material/PostAdd";
 import SortByAlpha from "@mui/icons-material/SortByAlpha";
 import DateRange from "@mui/icons-material/DateRange";
 import Rule from "@mui/icons-material/Rule";
+import { useDispatch, useSelector } from "react-redux";
+import { openDialog, setDialogType } from "../features/dialogs/dialogSlice";
+import {
+  fetchOneTask,
+  getTask,
+  updateCompletedTask,
+} from "../features/tasks/taskSlice";
 
-export default function TasksListView({
-  tasks,
-  setTasks,
-  auxTasks,
-  setAuxTasks,
-  taskSelected,
-  setTaskSelected,
-  handleClickCreateTask,
-  setOpenDialogDelete,
-  setTaskDeletedID,
-}) {
-  const { enqueueSnackbar } = useSnackbar();
+export default function TasksListView({ setTaskDeletedID }) {
   const [sortingType, setSortingType] = useState("");
   const [toggleTaskSelected, setToggleTaskSelected] = useState({
     id: undefined,
     active: false,
   });
+  const { tasks } = useSelector((state) => state.tasks);
+  const dispatch = useDispatch();
 
   // Request to get a task
   const handleSelectTask = (e) => {
@@ -43,16 +39,9 @@ export default function TasksListView({
     setToggleTaskSelected((prevState) => {
       // Only do the request when the task is inactive or click in a different task
       if (!toggleTaskSelected.active || prevState.id != value) {
-        axios
-          .get(`http://localhost:4000/${value}`)
-          .then((response) => {
-            setTaskSelected(response.data[0]);
-          })
-          .catch((error) => {
-            console.log("ERROR GETTING A TASK:", error);
-          });
+        dispatch(fetchOneTask(value));
       } else {
-        setTaskSelected({});
+        dispatch(getTask({}));
       }
       return {
         id: value,
@@ -64,30 +53,10 @@ export default function TasksListView({
   // Open dialog to confirm deleting a task
   const handleClickDeleteTask = (taskID) => {
     setTaskDeletedID(taskID);
-    setOpenDialogDelete(true);
+    dispatch(openDialog("dialogDelete"));
   };
 
-  // Handle sorting by different ways
-  const handleSortingType = (e, newSortingType) => {
-    setSortingType(newSortingType);
-    // Sorting by name (Only if not selected previously)
-    if (
-      (newSortingType === "name" && sortingType !== "name") ||
-      (newSortingType === "date" && sortingType !== "date")
-    ) {
-      setTasks(tasks.sort(sortingFunction(newSortingType)));
-    } else if (newSortingType === "completed" && sortingType !== "completed") {
-      // Filtering by completed (Only if not selected previously)
-      setTasks(tasks.filter((a) => a.completed === true));
-      setTaskSelected({});
-      setToggleTaskSelected({ id: undefined, active: false });
-    } else {
-      // If some button are selected, it becomes unselected and original tasks are showed
-      setSortingType("");
-      setTasks(auxTasks);
-    }
-  };
-
+  // Function to sort in different ways
   const sortingFunction = (type) => {
     return function (a, b) {
       if (type === "name") {
@@ -109,26 +78,46 @@ export default function TasksListView({
     };
   };
 
+  // Handle sorting and filter
+  const filterTodos = (tasks, sortingType) => {
+    const tasksForSort = [...tasks];
+    // Sorting by name
+    if (sortingType == "name" || sortingType == "date") {
+      return tasksForSort.sort(sortingFunction(sortingType));
+    } else if (sortingType == "completed") {
+      setToggleTaskSelected({ id: undefined, active: false });
+      // Filtering by completed
+      return tasksForSort.filter((a) => a.completed === true);
+    } else {
+      // If some button are selected, it becomes unselected and original tasks are showed
+      setSortingType("");
+      return tasks;
+    }
+  };
+
+  // UseMemo to get in cache the original tasks
+  const originalTasks = useMemo(
+    () => filterTodos(tasks, sortingType),
+    [tasks, sortingType]
+  );
+
+  // Update the sorting type once ToggleButton is pressed
+  const handleSortingType = (e, newSortingType) => {
+    setSortingType(newSortingType);
+    if (newSortingType == "completed") {
+      dispatch(getTask({}));
+    }
+  };
+
   // Request to update the completed field of a task
   const handleChangeCompleted = (task) => {
-    axios
-      .put(`http://localhost:4000/${task.id}`, { updatingField: "completed" })
-      .then((response) => {
-        setTasks(response.data.originalTasks);
-        setAuxTasks(response.data.originalTasks);
-        Object.keys(taskSelected).length === 0
-          ? null
-          : setTaskSelected(response.data.taskUpdated);
-        if (response.data.taskUpdated.completed) {
-          enqueueSnackbar("Task complete", { variant: "info" });
-        } else {
-          enqueueSnackbar("Task incomplete", { variant: "warning" });
-        }
-      })
-      .catch((error) => {
-        console.log("ERROR ON COMPLETE TASK: ", error);
-        enqueueSnackbar("Error while completing task", { variant: "error" });
-      });
+    dispatch(updateCompletedTask(task));
+  };
+
+  // Open dialog form to create a task
+  const handleClickCreateTask = () => {
+    dispatch(openDialog("dialogCreateUpdate"));
+    dispatch(setDialogType("create"));
   };
 
   return (
@@ -169,7 +158,7 @@ export default function TasksListView({
         </ToggleButtonGroup>
       </Grid>
       <Grid>
-        {tasks.map((task, index) => (
+        {originalTasks.map((task, index) => (
           <Grid key={index} container direction="row">
             <Grid>
               <Tooltip
